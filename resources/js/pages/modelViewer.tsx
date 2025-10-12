@@ -71,7 +71,7 @@ function BimView() {
       setUploadStatus('Getting Forge token...');
       const res = await axios.get(
         '/api/revit/token');
-      setForgeToken(res.data);
+      setForgeToken(res.data.trim());
       setUploadStatus('Forge token acquired');
       console.log(res.data)
       return res.data;
@@ -155,10 +155,11 @@ function BimView() {
           `https://developer.api.autodesk.com/modelderivative/v2/designdata/${urn}/metadata/${guid}`,
           { headers: { Authorization: `Bearer ${cleanToken}` } }
         );
+        console.log('medel', hierarchyRes)
         console.log('Model Hierarchy:', hierarchyRes.data.data.objects[0].objects[0].objects[0].objectid);
         setProps(hierarchyRes.data.data.objects[0].objects);
         console.log('Model Properties', modelProps);
-        initViewer(token, urn);
+        initViewer(token.trim(), urn);
       } else {
 
         setUploadStatus(`Translation in progress: ${res.data.progress}`);

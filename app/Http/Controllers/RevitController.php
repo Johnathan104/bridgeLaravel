@@ -15,7 +15,7 @@ class RevitController extends Controller
         'grant_type' => 'client_credentials',
         'scope' =>  'data:read data:write bucket:create',
         ]);
-        $token = $tokenResponse->json('access_token');
+       $token = trim($tokenResponse->json('access_token'));
         return $token;
     }
     public function getModelByUrn($urn){

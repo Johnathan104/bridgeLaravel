@@ -72,7 +72,7 @@ export default function Dashboard() {
                     <p className='font-bold mr-[20px]'>Persetujuan </p> ajukan hasil analisis untuk disetujui oleh pihak manajemen atau penanggung jawab proyek
                     {user.role== 'admin'?
                         <Link href='/admin/changes'>
-                            <button className='bg-white ml-2 rounded-[2px] px-2 py-1 text-black hover:bg-slate-400'> Click here </button>
+                            <button className='bg-white ml-2 rounded-[2px] px-2 py-1 text-black hover:bg-slate-400'> Click heres </button>
                         </Link>
                         :
                         ''
@@ -84,7 +84,7 @@ export default function Dashboard() {
                         5
                     </div>
                     <p className='font-bold mr-[20px]'>Implementasi </p> setelah disetujui, lakukan perubahan sesuai dengan rencana dan pastikan semua catatan pelaksanaan terdokumentasi
-                    <Link href=''>
+                    <Link href='/bimUpload'>
                     <button className='bg-white px-2 py-1 rounded-[2px] text-black hover:bg-slate-400'> Click here </button>
                 </Link>
                 </div>

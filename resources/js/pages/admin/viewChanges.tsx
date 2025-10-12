@@ -54,6 +54,18 @@ function ViewChanges() {
           setChangeFormErrors(null);
       }
     };
+  const handleDelete= (change : Change)=>{
+    router.delete('/changes/'+change.id, {
+      preserveScroll:true,
+      onSuccess: ()=>{
+        alert('succesfuly deleted')
+      }, 
+      onError:(error)=>{
+        alert('failed to delete, something went wrong')
+        console.error(error)
+      }
+    })
+  }
   const handleEditChangeSubmit = (e: React.FormEvent) => {
           e.preventDefault();
           setChangeProcessing(true);
@@ -173,7 +185,7 @@ function ViewChanges() {
                         </button>
                       ):(
                         <button
-                          onClick={() => }
+                          onClick={() => handleDelete(change)}
                           className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
                         >
                           Delete

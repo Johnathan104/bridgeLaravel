@@ -102,7 +102,7 @@ function RisksView() {
         '/api/revit/token');
       setForgeToken(res.data);
       setUploadStatus('Forge token acquired');
-      console.log(res.data)
+      console.log("token is", res.data)
       return res.data;
     } catch {
       setUploadStatus('Failed to get Forge token');
@@ -111,14 +111,16 @@ function RisksView() {
   };
  async function getSchedules() {
   console.log('fetching schedules with urn', urn)
+  console.log('forge token is', forgeToken)
+
   // 1️⃣ Get model metadata (all views, schedules, etc.)
-  const metaRes = await fetch(
+  if(forgeToken){
+    const metaRes = await fetch(
     `https://developer.api.autodesk.com/modelderivative/v2/designdata/${urn}/metadata`,
     {
-      headers: { Authorization: `Bearer ${forgeToken}` },
+      headers: { Authorization: `Bearer ${forgeToken.trim()}` },
     }
   );
-
   const metaData = await metaRes.json();
   const metadataList = metaData.data.metadata;
 
@@ -137,12 +139,13 @@ function RisksView() {
     const scheduleRes = await fetch(
       `https://developer.api.autodesk.com/modelderivative/v2/designdata/${urn}/metadata/${scheduleGuid}`,
       {
-        headers: { Authorization: `Bearer ${forgeToken}` },
+        headers: { Authorization: `Bearer ${forgeToken.trim()}` },
       }
     );
 
     const scheduleData = await scheduleRes.json();
     console.log("Schedule contents:", scheduleData);
+  } 
   }
 }
   const handleDelete = (risk:Risk)=>{
@@ -184,6 +187,7 @@ function RisksView() {
   };
   // 🔹 Init Forge Viewer
   const initViewer = (token: string, urn: string) => {
+    console.log('initviewer token is', token)
     const options = {
       env: 'AutodeskProduction2',
       api: 'streamingV2',
@@ -221,7 +225,7 @@ function RisksView() {
             // 🔹 Highlight risks once model is loaded
           });
         },
-        () => console.error('Failed to load document'),
+        (error) => console.error('Failed to load document', error),
         { accessToken: token }
       );
     });
@@ -343,7 +347,7 @@ function RisksView() {
       const res = await fetch(
         `https://developer.api.autodesk.com/modelderivative/v2/designdata/${urn}/metadata/${guid}`,
         {
-          headers: { Authorization: `Bearer ${forgeToken}` },
+          headers: { Authorization: `Bearer ${forgeToken?.trim()}` },
         }
       );
 
@@ -527,7 +531,9 @@ const handleRequestChangeSubmit = (e: React.FormEvent) => {
     (async () => {
       getModel()
       console.log('role is', role)
-      const token = await getForgeToken();
+      const restoken = await getForgeToken();
+      const token = restoken.trim()
+      console.log('token from await is', token)
       if (token) {
         // Save viewer instance for cleanup
         Autodesk.Viewing.Initializer({

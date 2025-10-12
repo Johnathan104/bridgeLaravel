@@ -44,7 +44,7 @@ function App() {
     api: 'streamingV2', // Use 'derivativeV2' for SVF
     getAccessToken: function(onTokenReady) {
           let timeInSeconds = 3600; // Use value provided by APS Authentication (OAuth) API
-          onTokenReady(token, timeInSeconds);
+          onTokenReady(token.trim(), timeInSeconds);
       }
     };
 
@@ -119,7 +119,7 @@ function App() {
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token.trim()}`,
             'Content-Type': 'application/json',
           },
         }
@@ -152,7 +152,7 @@ function App() {
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token.trim()}`,
             'Content-Type': 'application/json',
           },
         }
@@ -183,7 +183,7 @@ function App() {
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token.trim()}`,
             'Content-Type': 'application/json',
           },
         }
@@ -203,7 +203,7 @@ function App() {
     let lolurn=modelUrn
     axios.get(`https://developer.api.autodesk.com/modelderivative/v2/designdata/${lolurn}/manifest`,{
       headers:{
-        Authorization:`Bearer ${forgeToken}`
+        Authorization:`Bearer ${forgeToken.trim()}`
       }
     }).then(res=>{
       console.log(res, 'status')
@@ -214,13 +214,13 @@ function App() {
       //get metadata
       axios.get(`https://developer.api.autodesk.com/modelderivative/v2/designdata/${lolurn}/metadata`, {
         headers:{
-          Authorization:`Bearer ${forgeToken}`
+          Authorization:`Bearer ${forgeToken.trim()}`
         }
       }).then((res)=>{
         let guid = res.data.data.metadata[0].guid
         axios.get(`https://developer.api.autodesk.com/modelderivative/v2/designdata/${lolurn}/metadata/${guid}`, {
           headers:{
-            Authorization:`Bearer ${forgeToken}`
+            Authorization:`Bearer ${forgeToken.trim()}`
           }
         }).then((res)=>{
           console.log(res.data.data.objects[0].objects)
@@ -242,7 +242,7 @@ function App() {
         `https://developer.api.autodesk.com/oss/v2/buckets/${BUCKET_KEY}/objects/${MODEL_FILE_NAME}/signeds3upload`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token.trim()}`,
             'Content-Type': 'application/octet-stream',
           },
         }
