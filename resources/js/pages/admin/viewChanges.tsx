@@ -3,21 +3,22 @@ import { usePage, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import Modal from '@/components/modal';
-interface Change {
-  id: number;
-  date: string;
-  title: string;
-  description: string;
-  pelapor: string;
-  status: string;
-  object_id: string;
-  urn: string;
-  impact_analysis?: string;
-  mitigation_plan?: string;
-  approved_by?: string;
-  implemented_by?: string;
-  evaluation_notes?: string;
-}
+import {Change, Evaluation} from '@/types';
+// interface Change {
+//   id: number;
+//   date: string;
+//   title: string;
+//   description: string;
+//   pelapor: string;
+//   status: string;
+//   object_id: string;
+//   urn: string;
+//   impact_analysis?: string;
+//   mitigation_plan?: string;
+//   approved_by?: string;
+//   implemented_by?: string;
+//   evaluation_notes?: string;
+// }
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -38,6 +39,36 @@ function ViewChanges() {
   const [changeForm, setChangeForm] = useState<any>({});
   const [changeFormErrors, setChangeFormErrors] = useState<string | null>(null);
   const [changeProcessing, setChangeProcessing] = useState(false);
+  const [evaluationForm, setEvaluationForm] = useState<any>({ 
+    'id': 0,
+    change_id: 0, // The foreign key linking to Course
+    ratings: 0, // Stored as integer
+    comments: null,
+    evaluated_by: '',
+    evaluation_date: null, // Typically returned as an ISO date string (e.g., "YYYY-MM-DD")
+    variansi_rencana: '',
+    created_at: '', // Laravel timestamps are usually ISO strings
+    updated_at: '', // Laravel timestamps are usually ISO s
+    // trings
+
+});
+const [evaluateModalOpen, setEvaluateModalOpen] = useState(false);
+
+const handleChangefromChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setEvaluationForm({ ...evaluationForm, [e.target.name]: e.target.value });
+}
+
+const handleEvaluate=(change:Change)=>{
+  if(change.id){
+     setEvaluationForm({
+      ...evaluationForm,
+      change_id:change.id
+     });
+     setEvaluateModalOpen(true);
+     setChangeFormErrors(null);
+  }
+}
+
   const handleChangeFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
           setChangeForm({ ...changeForm, [e.target.name]: e.target.value });
       };
@@ -199,6 +230,16 @@ function ViewChanges() {
                     >
                       View
                     </button>
+                    {
+                      filteredStatus =='accepted' &&(
+                        <button
+                          onClick={() => handleEvaluate(change)}
+                          className="bg-yellow-600 hover:bg-yellow-700 ml-2 text-white px-3 py-1 rounded"
+                        >
+                          evaluate
+                        </button>
+                      )
+                    }
                   </td>
                 </tr>
               ))
@@ -345,6 +386,87 @@ function ViewChanges() {
                         disabled={changeProcessing}
                     />
                 </form>
+            </Modal>
+          {/* evaluation modal */}
+            <Modal open={evaluateModalOpen} onClose={() => setEvaluateModalOpen(false)}>
+              <h1 className="text-2xl font-bold text-black mb-4">Evaluate Change</h1>
+              {changeFormErrors && (
+                <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{changeFormErrors}</div>
+              )}
+              <form className="flex flex-col w-[80vh] h-[80vh] overflow-y-scroll" onSubmit={(e) => {
+                e.preventDefault();
+                setChangeProcessing(true);
+                setChangeFormErrors(null);
+                router.post(`/evaluations`, evaluationForm, {
+                  preserveScroll: true,
+                  onSuccess: () => {
+                    setEvaluateModalOpen(false);
+                    setChangeProcessing(false);
+                    alert('Evaluation submitted!');
+                  },
+                  onError: (error) => {
+                    setChangeFormErrors('Gagal submit evaluasi.');
+                    setChangeProcessing(false);
+                  },
+                  onFinish: () => setChangeProcessing(false),
+                });
+              }}>
+                <label htmlFor="ratings" className="font-semibold mb-1 text-black">Ratings</label>
+                <input
+                  id="ratings"
+                  className="w-full text-black p-2 my-2 border border-gray-300 rounded"
+                  type="number"
+                  name="ratings"
+                  min={0}
+                  max={5}
+                  value={evaluationForm.ratings || ''}
+                  onChange={handleChangefromChange}
+                />
+                <label htmlFor="comments" className="font-semibold mb-1 text-black">Comments</label>
+                <textarea
+                  id="comments"
+                  className="w-full p-2 my-2 text-black border border-gray-300 rounded"
+                  name="comments"
+                  placeholder="Comments"
+                  value={evaluationForm.comments || ''}
+                  onChange={handleChangefromChange}
+                />
+                <label htmlFor="evaluated_by" className="font-semibold mb-1 text-black">Evaluated By</label>
+                <input
+                  id="evaluated_by"
+                  className="w-full text-black p-2 my-2 border border-gray-300 rounded"
+                  type="text"
+                  name="evaluated_by"
+                  placeholder="Evaluator"
+                  value={evaluationForm.evaluated_by || ''}
+                  onChange={handleChangefromChange}
+                />
+                <label htmlFor="evaluation_date" className="font-semibold mb-1 text-black">Evaluation Date</label>
+                <input
+                  id="evaluation_date"
+                  className="w-full text-black p-2 my-2 border border-gray-300 rounded"
+                  type="date"
+                  name="evaluation_date"
+                  value={evaluationForm.evaluation_date || ''}
+                  onChange={handleChangefromChange}
+                />
+                <label htmlFor="variansi_rencana" className="font-semibold mb-1 text-black">Variansi Rencana</label>
+                <input
+                  id="variansi_rencana"
+                  className="w-full text-black p-2 my-2 border border-gray-300 rounded"
+                  type="text"
+                  name="variansi_rencana"
+                  placeholder="Variansi Rencana"
+                  value={evaluationForm.variansi_rencana || ''}
+                  onChange={handleChangefromChange}
+                />
+                <input
+                  className="w-full p-2 border border-gray-300 rounded bg-stone-800 text-white hover:bg-stone-700 cursor-pointer"
+                  type="submit"
+                  value={changeProcessing ? 'Submitting...' : 'Submit'}
+                  disabled={changeProcessing}
+                />
+              </form>
             </Modal>
     </AppLayout>
   );

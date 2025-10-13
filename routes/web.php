@@ -17,6 +17,7 @@ Route::get('/', function () {
 
 // ==================== Admin Routes ====================
 Route::middleware([AdminMiddleware::class, 'auth', 'verified'])->group(function(){
+    Route::resource('evaluations', EvaluationController::class);
 
     // Change Request Management (ADMIN ONLY)
     Route::post('/requests/{id}/action', function (Request $request, $id) {
