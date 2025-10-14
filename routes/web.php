@@ -8,6 +8,7 @@ use App\Models\ModelUpload;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Risk;
 use App\Models\requestChange;
+use App\Http\Controllers\EvaluationController;
 use App\Http\Middleware\AdminMiddleware;
 
 // ==================== Public Routes ====================
@@ -75,7 +76,8 @@ Route::middleware([AdminMiddleware::class, 'auth', 'verified'])->group(function(
     // Change CRUD Routes (ADMIN ONLY)
     Route::get('/admin/changes',function(){
         $changes = \App\Models\Change::all();
-        return Inertia::render('admin/viewChanges',['changes'=>$changes]);
+        $evaluations = \App\Models\Evaluation::all();
+        return Inertia::render('admin/viewChanges',['changes'=>$changes, 'evaluations'=>$evaluations]);
     } );
 
 Route::put('/changes/{id}', function (Request $request, $id) {

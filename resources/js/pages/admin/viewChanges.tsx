@@ -28,11 +28,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 interface PageProps {
   changes: Change[];
+  evaluations: Evaluation[];
   urns: string[];
 }
 
 function ViewChanges() {
   const { props } = usePage<PageProps>();
+  const evaluations = props.evaluations
   const [urnFilter, setUrnFilter] = useState<string>('');
   const [filteredStatus, setFilteredStatus] = useState<string>('pending');
    const [editChangeModalOpen, setEditChangeModalOpen] = useState(false);
@@ -60,6 +62,14 @@ const handleChangefromChange = (e: React.ChangeEvent<HTMLInputElement | HTMLText
 
 const handleEvaluate=(change:Change)=>{
   if(change.id){
+    evaluations.forEach((evaluation)=>{
+      if(evaluation.change_id === change.id){
+        setEvaluationForm(evaluation);
+        setEvaluateModalOpen(true);
+        setChangeFormErrors(null);
+        return;
+      }
+    })
      setEvaluationForm({
       ...evaluationForm,
       change_id:change.id
@@ -231,7 +241,7 @@ const handleEvaluate=(change:Change)=>{
                       View
                     </button>
                     {
-                      filteredStatus =='accepted' &&(
+                      filteredStatus =='completed' &&(
                         <button
                           onClick={() => handleEvaluate(change)}
                           className="bg-yellow-600 hover:bg-yellow-700 ml-2 text-white px-3 py-1 rounded"

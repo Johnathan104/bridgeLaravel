@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Evaluation;
-use App\Models\Course; // Assuming Course model exists
+use App\Models\Change;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -14,7 +14,8 @@ class EvaluationController extends Controller
      */
     public function index()
     {
-        $evaluations = Evaluation::with('course')->latest()->paginate(10);
+        // FIX: Use Evaluation::latest()->paginate(10) without 'course' relation
+        $evaluations = Evaluation::latest()->paginate(10);
 
         return Inertia::render('Evaluations/Index', [
             'evaluations' => $evaluations,
@@ -26,11 +27,11 @@ class EvaluationController extends Controller
      */
     public function create()
     {
-        // Example: passing available courses to a dropdown
-        $courses = Course::all(['id', 'name']);
+        // FIX: Use Change model for dropdown
+        $changes = Change::all(['id', 'title']);
 
         return Inertia::render('Evaluations/Create', [
-            'courses' => $courses,
+            'changes' => $changes,
         ]);
     }
 
@@ -41,7 +42,7 @@ class EvaluationController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'change_id' => 'required|exists:courses,id',
+            'change_id' => 'required|exists:changes,id',
             'ratings' => 'required|integer|min:1|max:5',
             'comments' => 'nullable|string',
             'evaluated_by' => 'required|string|max:255',
@@ -51,7 +52,6 @@ class EvaluationController extends Controller
 
         Evaluation::create($validated);
 
-        // Redirect back to the previous page (e.g., the create form or index page)
         return redirect()->back()
             ->with('success', 'Evaluation successfully created!');
     }
@@ -61,7 +61,8 @@ class EvaluationController extends Controller
      */
     public function show(Evaluation $evaluation)
     {
-        $evaluation->load('course');
+        // FIX: Load 'change' relation if needed
+        $evaluation->load('change');
 
         return Inertia::render('Evaluations/Show', [
             'evaluation' => $evaluation,
@@ -73,11 +74,11 @@ class EvaluationController extends Controller
      */
     public function edit(Evaluation $evaluation)
     {
-        $courses = Course::all(['id', 'name']);
+        $changes = Change::all(['id', 'title']);
 
         return Inertia::render('Evaluations/Edit', [
             'evaluation' => $evaluation,
-            'courses' => $courses,
+            'changes' => $changes,
         ]);
     }
 
@@ -88,7 +89,7 @@ class EvaluationController extends Controller
     public function update(Request $request, Evaluation $evaluation)
     {
         $validated = $request->validate([
-            'change_id' => 'required|exists:courses,id',
+            'change_id' => 'required|exists:changes,id',
             'ratings' => 'required|integer|min:1|max:5',
             'comments' => 'nullable|string',
             'evaluated_by' => 'required|string|max:255',
@@ -98,7 +99,6 @@ class EvaluationController extends Controller
 
         $evaluation->update($validated);
 
-        // Redirect back to the previous page (e.g., the index or edit form)
         return redirect()->back()
             ->with('success', 'Evaluation successfully updated!');
     }
@@ -111,7 +111,6 @@ class EvaluationController extends Controller
     {
         $evaluation->delete();
 
-        // Redirect back to the previous page (e.g., the index page)
         return redirect()->back()
             ->with('success', 'Evaluation successfully deleted!');
     }

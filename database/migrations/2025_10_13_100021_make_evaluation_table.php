@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('evaluation_date');
             $table->text('variansi_rencana');
             $table->timestamps();
-            $table->foreign('change_id')->references('id')->on('courses')->onDelete('cascade');
+            $table->foreign('change_id')->references('id')->on('changes')->onDelete('cascade');
         });
     }
 

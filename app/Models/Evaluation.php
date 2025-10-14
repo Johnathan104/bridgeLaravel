@@ -39,9 +39,9 @@ class Evaluation extends Model
      * Get the Course that this Evaluation belongs to.
      * Assumes you have a 'Course' model defined in App\Models\Course.
      */
-    public function course(): BelongsTo
+    public function change(): BelongsTo
     {
         // change_id is the foreign key on this model, linking back to the primary key of the Course model.
-        return $this->belongsTo(Course::class, 'change_id');
+        return $this->belongsTo(Change::class, 'change_id');
     }
 }
