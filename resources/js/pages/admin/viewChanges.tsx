@@ -60,22 +60,43 @@ const handleChangefromChange = (e: React.ChangeEvent<HTMLInputElement | HTMLText
     setEvaluationForm({ ...evaluationForm, [e.target.name]: e.target.value });
 }
 
-const handleEvaluate=(change:Change)=>{
-  if(change.id){
-    evaluations.forEach((evaluation)=>{
-      if(evaluation.change_id === change.id){
-        setEvaluationForm(evaluation);
-        setEvaluateModalOpen(true);
-        setChangeFormErrors(null);
-        return;
-      }
-    })
-     setEvaluationForm({
-      ...evaluationForm,
-      change_id:change.id
-     });
-     setEvaluateModalOpen(true);
-     setChangeFormErrors(null);
+const handleEvaluate = (change: Change) => {
+  console.log('evaluations:', evaluations);
+  if (!change.id) return;
+
+  let found = false;
+  for (const evaluation of evaluations) {
+    if (evaluation.change_id === change.id) {
+      found = true;
+      const newForm = {
+        ...evaluation,
+        evaluation_date: change.date ? change.date.split('T')[0] : evaluation.evaluation_date,
+      };
+      setEvaluationForm(newForm);
+      console.log('found existing evaluation:', evaluation);
+      console.log('evaluationForm set to:', newForm);
+      setEvaluateModalOpen(true);
+      setChangeFormErrors(null);
+      break;
+    }
+  }
+
+  if (!found) {
+    const emptyForm = {
+      id: 0,
+      change_id: change.id,
+      ratings: 0,
+      comments: null,
+      evaluated_by: '',
+      evaluation_date: change.date ? change.date.split('T')[0] : null,
+      variansi_rencana: '',
+      created_at: '',
+      updated_at: '',
+    };
+    setEvaluationForm(emptyForm);
+    console.log('new evaluationForm set to:', emptyForm);
+    setEvaluateModalOpen(true);
+    setChangeFormErrors(null);
   }
 }
 
@@ -417,6 +438,8 @@ const handleEvaluate=(change:Change)=>{
                   onError: (error) => {
                     setChangeFormErrors('Gagal submit evaluasi.');
                     setChangeProcessing(false);
+                    console.log('evaluationForm:', evaluationForm);
+                    console.log(error)
                   },
                   onFinish: () => setChangeProcessing(false),
                 });

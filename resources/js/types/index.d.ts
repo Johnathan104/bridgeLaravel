@@ -16,6 +16,12 @@ export interface Evaluation {
     updated_at: string; // Laravel timestamps are usually ISO strings
 
 }
+export interface Upload{
+    id:number;
+    urn:string;
+    filename:string;
+
+}
 
 export interface Risk{
   risk_code: string;

@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('model_uploads', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        //
+        Schema::table('model_uploads', function(Blueprint $table){
+            $table->integer('iteration')->default(1);
         });
     }
 
@@ -22,6 +22,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('model_uploads');
+        //
+        Schema::table('model_uploads', function(Blueprint $table){
+            $table->dropColumn('iteration');
+        });
     }
 };

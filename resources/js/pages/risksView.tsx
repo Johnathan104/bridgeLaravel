@@ -487,7 +487,7 @@ const handleRequestChangeSubmit = (e: React.FormEvent) => {
       changeForm,
       {
         onSuccess: () => window.location.reload(),
-        onError: () => setChangeFormErrors('Gagal mengupdate perubahan.'),
+        onError: (error) => {setChangeFormErrors('Gagal mengupdate perubahan.');console.log('error updating change', error )},
         onFinish: () => setChangeProcessing(false),
       }
     );
@@ -897,21 +897,7 @@ const handleRequestChangeSubmit = (e: React.FormEvent) => {
             value={changeForm.pelapor || ''}
             onChange={handleChangeFormChange}
           />
-          <label htmlFor="change_status" className="font-semibold mb-1 text-black">Status</label>
-          <select
-            id="change_status"
-            className="w-full text-black p-2 my-2 border border-gray-300 rounded"
-            name="status"
-            value={changeForm.status || ''}
-            onChange={handleChangeFormChange}
-          >
-            <option value="">Pilih Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="implemented">Implemented</option>
-            <option value="evaluated">Evaluated</option>
-            <option value="completed">Completed</option>
-          </select>
+        
           <label htmlFor="change_object_id" className="font-semibold mb-1 text-black">Object ID</label>
           <input
             id="change_object_id"
@@ -1047,9 +1033,8 @@ const handleRequestChangeSubmit = (e: React.FormEvent) => {
           >
             <option value="">Pilih Status</option>
             <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
+            <option value="accepted">Accepted</option>
             <option value="implemented">Implemented</option>
-            <option value="evaluated">Evaluated</option>
             <option value="completed">Completed</option>
           </select>
           <label htmlFor="edit_change_object_id" className="font-semibold mb-1 text-black">Object ID</label>

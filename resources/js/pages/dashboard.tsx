@@ -21,7 +21,7 @@ export default function Dashboard() {
             <div className="flex h-full w-full flex-1 flex-col items-center gap-4 overflow-x-auto rounded-xl p-0">
                 <div className="hero">
                     <div className="hero-content text-center flex justify-center flex-col items-center">
-                        <h1 className='text-6xl font-bold mb-4'>Welcome to the Bridge Construction Project!</h1>
+                        <h1 className='text-6xl font-bold mb-4'>Information System For Controlling Change Order</h1>
                         <p>This website aims to optimize your working schedulte by creating a way to track changes and progress along the parts, please enjoy your usage!</p>
                     </div>
                 </div>
@@ -41,24 +41,24 @@ export default function Dashboard() {
                     <div className="w-full flex flex-col items-center mt-[50px]">
                         <h1 className='w-fit text-4xl text-center mb-4 font-bold'>Cara untuk mencatat perubahan</h1>
                         <div className="flex items-center border-bottom border-b py-[20px] w-full">
-                            <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] w-[35px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
+                            <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] min-w-[35px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
                                  1
                             </div>
                             <p className='font-bold mr-[20px]'>Inspection </p> lakukan inspeksi pada model yang telah diupload, lihat model-model yang telah di upload di BIM view, jika ada masalah catat resiko 
                             
                             <Link href='/models'>
-                            <button className='bg-white rounded-[2px] px-2 py-1 text-black hover:bg-slate-400'> Click here </button>
+                            <button className='bg-white rounded-[2px] ms-2 px-2 py-1 text-black hover:bg-slate-400 mx-xl ms-2'> Click here </button>
                         </Link>
                         </div>
                         <div className="flex items-center border-bottom border-b py-[20px] w-full">
-                            <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] w-[35px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
+                            <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] min-w-[35px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
                                  2
                             </div>
                             <p className='font-bold mr-[20px]'>Catat Perubahan </p> jika ingin mengatasi resiko atau ada perubahan pada model catatkan di page model viewer
                             
                         </div>
                         <div className="flex items-center border-bottom border-b py-[20px] w-full">
-                    <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] w-[45px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
+                    <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] min-w-[35px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
                         3
                     </div>
                     <p className='font-bold mr-[20px]'>Analisis Dampak </p> lakukan analisis terhadap dampak dari perubahan, termasuk waktu, biaya, serta potensi risiko tambahan, Ini dilakukan di form yang sama untuk mencatat perubahan
@@ -66,13 +66,13 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex items-center border-bottom border-b py-[20px] w-full">
-                    <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] w-[35px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
+                    <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] min-w-[35px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
                         4
                     </div>
                     <p className='font-bold mr-[20px]'>Persetujuan </p> ajukan hasil analisis untuk disetujui oleh pihak manajemen atau penanggung jawab proyek
                     {user.role== 'admin'?
                         <Link href='/admin/changes'>
-                            <button className='bg-white ml-2 rounded-[2px] px-2 py-1 text-black hover:bg-slate-400'> Click heres </button>
+                            <button className='bg-white mx-2 rounded-[2px] px-2 py-1 text-black hover:bg-slate-400 mx-xl ms-2'> Click here </button>
                         </Link>
                         :
                         ''
@@ -80,17 +80,17 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex items-center border-bottom border-b py-[20px] w-full">
-                    <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] w-[35px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
+                    <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] min-w-[35px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
                         5
                     </div>
                     <p className='font-bold mr-[20px]'>Implementasi </p> setelah disetujui, lakukan perubahan sesuai dengan rencana dan pastikan semua catatan pelaksanaan terdokumentasi
                     <Link href='/bimUpload'>
-                    <button className='bg-white px-2 py-1 rounded-[2px] text-black hover:bg-slate-400'> Click here </button>
+                    <button className='bg-white px-2 py-1 rounded-[2px] text-black hover:bg-slate-400 mx-xl ms-2'> Click here </button>
                 </Link>
                 </div>
 
                 <div className="flex items-center border-bottom border-b py-[20px] w-full">
-                    <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] w-[35px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
+                    <div style={{justifyContent:'center'}} className="rounded-[50%] mr-[20px] min-w-[35px] h-[35px] flex items-center content-center bg-black text-white dark:bg-white dark:text-black ">
                         6
                     </div>
                     <p className='font-bold mr-[20px]'>Evaluasi </p> lakukan evaluasi terhadap hasil implementasi untuk memastikan efektivitas perubahan dan kesesuaian dengan tujuan awal

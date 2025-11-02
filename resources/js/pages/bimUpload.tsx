@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import {Head, router} from '@inertiajs/react';
+import {Head, router, usePage} from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+
+import {Upload} from '@/types';
 // --- CONFIGURATION ---
-const BUCKET_KEY = 'bridge-react-demo-bucket'; // Must be globally unique
+// const BUCKET_KEY = 'bridge-react-demo-buckets'; // Must be globally unique
+const BUCKET_KEY = 'bridge_react_demo_bucket_jaem_01'; // Must be globally unique
 const currentDate = new Date().toISOString().replace(/[-:.]/g, '');
 const MODEL_FILE_NAME = `model_${currentDate}.rvt`; // Unique file name with timestamp
 function encodeUrnRFC6920(objectId) {
@@ -11,6 +14,12 @@ function encodeUrnRFC6920(objectId) {
     .replace(/=/g, '')   // Remove padding
     .replace(/\//g, '_') // Replace '/' with '_'
     .replace(/\+/g, '-'); // Replace '+' with '-'
+}
+
+
+interface PageProps {
+  urn: string;
+  uploads: Upload[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -21,8 +30,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 function App() {
-  const [props, setProps] = useState([])
-  
+  const [props1, setProps1] = useState([])
+  const { props } = usePage<PageProps>();
+
+  const uploads = props.uploads
+  const [previousCopyURN, setPreviousCopyURN] = useState('')
+  const [uploadType, setUploadType] = useState('new');
   const [propType, setPropType] = useState(null)
   const [forgeToken, setForgeToken] = useState(null);
   const [modelUrn, setModelUrn] = useState('');
@@ -76,9 +89,9 @@ function App() {
             viewer.addEventListener(Autodesk.Viewing.SELECTION_CHANGED_EVENT, function (event) {
             if (event.dbIdArray.length > 0) {
               const dbId = event.dbIdArray[0];
-              viewer.getProperties(dbId, function (props) {
-                console.log('Clicked part properties:', props);
-                alert(`You clicked: ${props.name}\nCategory: ${props.properties[0]?.displayName}`);
+              viewer.getProperties(dbId, function (props1) {
+                console.log('Clicked part properties:', props1);
+                alert(`You clicked: ${props1.name}\nCategory: ${props1.properties[0]?.displayName}`);
               });
             }
           });
@@ -137,10 +150,11 @@ function App() {
 
   const translateModel = async (token, urn) => {
     try {
+      console.log('Starting translation job for URN:', token);
       const response = await axios.post(
         'https://developer.api.autodesk.com/modelderivative/v2/designdata/job',
         {
-          input: { urn },
+          input: { urn:urn.trim() },
           output: {
             formats: [
               {
@@ -159,11 +173,30 @@ function App() {
       );
       setUploadStatus('Translation job started. You can proceed to check status, to view');
       console.log('Translation job response:', response.data);
-      setModelUrn(response.data.urn);
-      router.post('/models', {
-      urn,
-      filename: MODEL_FILE_NAME,
-    });
+      const translatedUrn = response.data.urn;
+      setModelUrn(translatedUrn);
+
+      // FIX: send correct payload for new vs copy uploads
+      if (uploadType === 'new') {
+         router.post('/models', {
+            urn: translatedUrn,
+            filename: MODEL_FILE_NAME,
+          });
+      } else {
+        // ensure previousCopyURN is provided
+        if (!previousCopyURN) {
+          setUploadStatus('Previous URN is required for copy uploads.');
+          console.warn('previousCopyURN missing for copy upload');
+        } else {
+          alert('Creating copy of existing model')
+          router.post('/models/copy', {
+            previous_urn: previousCopyURN,
+            filename: MODEL_FILE_NAME,
+            current_urn: translatedUrn,
+          });
+        }
+      }
+     
       
     } catch (error) {
       setUploadStatus('Failed to start translation job');
@@ -224,7 +257,7 @@ function App() {
           }
         }).then((res)=>{
           console.log(res.data.data.objects[0].objects)
-          setProps(res.data.data.objects[0].objects)
+          setProps1(res.data.data.objects[0].objects)
         })
       })
       createViewerReact(forgeToken,res.data.urn)
@@ -238,26 +271,50 @@ function App() {
   // --- Upload RVT File ---
   const uploadRvtFile = async (token, file) => {
     try {
-      const response = await axios.get(
-        `https://developer.api.autodesk.com/oss/v2/buckets/${BUCKET_KEY}/objects/${MODEL_FILE_NAME}/signeds3upload`,
-        {
-          headers: {
-            Authorization: `Bearer ${token.trim()}`,
-            'Content-Type': 'application/octet-stream',
-          },
-        }
-      );
-      const { uploadKey, urls } = response.data;
-      await axios.put(
-        urls[0],
-        file,
-        {
-          headers: {
-            'Content-Type': 'application/octet-stream',
-          },
-        }
-      );
-      getSignedS3UploadUrl(token, uploadKey);
+      if( uploadType === 'new'){
+        const response = await axios.get(
+          `https://developer.api.autodesk.com/oss/v2/buckets/${BUCKET_KEY}/objects/${MODEL_FILE_NAME}/signeds3upload`,
+          {
+            headers: {
+              Authorization: `Bearer ${token.trim()}`,
+              'Content-Type': 'application/octet-stream',
+            },
+          }
+        );
+        const { uploadKey, urls } = response.data;
+        await axios.put(
+          urls[0],
+          file,
+          {
+            headers: {
+              'Content-Type': 'application/octet-stream',
+            },
+          }
+        );
+        getSignedS3UploadUrl(token, uploadKey);
+      }else{
+         const response = await axios.get(
+          `https://developer.api.autodesk.com/oss/v2/buckets/${BUCKET_KEY}/objects/${MODEL_FILE_NAME}/signeds3upload`,
+          {
+            headers: {
+              Authorization: `Bearer ${token.trim()}`,
+              'Content-Type': 'application/octet-stream',
+            },
+          }
+        );
+        const { uploadKey, urls } = response.data;
+        await axios.put(
+          urls[0],
+          file,
+          {
+            headers: {
+              'Content-Type': 'application/octet-stream',
+            },
+          }
+        );
+        getSignedS3UploadUrl(token, uploadKey);
+      }
+      
     } catch (error) {
       setUploadStatus('File upload failed');
       return null;
@@ -290,8 +347,35 @@ function App() {
    <AppLayout breadcrumbs={breadcrumbs}>
     <Head title="BIM Upload" />
     <div className="flex justify-center items-center p-4">
+       
         <div className="w-full max-w-4xl border border-gray-400 rounded-lg p-6 shadow">
         <h1 className="text-2xl font-bold mb-4">Upload RVT and Get URN</h1>
+         <p>select type of upload (new/ copy)</p>
+        <select 
+        name="uploading_type" 
+        id="uploading_typetype"
+        value={uploadType}
+        onChange={(e)=>setUploadType(e.target.value)} 
+        className="w-full p-4 border-gray-300 rounded-sm mb-4 border">
+          <option  value="new">New Upload</option>
+          <option value="copy">Copy Existing Model</option>
+        </select>
+        {uploadType === 'copy' && (
+          <select 
+          name="previsousURN" 
+          id="previous_URN"
+          value={previousCopyURN}
+          onChange={(e)=>setPreviousCopyURN(e.target.value)} 
+          className="w-full p-4 border-gray-300 rounded-sm mb-4 border">
+            {
+              uploads.map((upload)=>(
+                <option key={upload.id} value={upload.urn}>
+                  {upload.filename} - {upload.urn}
+                </option>
+              ))
+            }
+          </select>
+        )}
         <p className="text-sm">Model name</p>
         <input type="text" onChange={(e)=>setModelName(e.target.value)}  value ={model_name} className="w-full border border-white p-2 mb-4 rounded-sm" />
         <input
@@ -311,7 +395,7 @@ function App() {
             Check Status
         </button>
 
-        {props.length > 0 ? (
+        {props1.length > 0 ? (
             <div className="flex flex-col md:flex-row gap-4 p-4 border border-gray-200 rounded-lg">
             <div className="flex-1">1
                 <h2 className="text-center font-semibold mb-2">Type</h2>
@@ -319,7 +403,7 @@ function App() {
                 id="propType"
                 className="w-full p-2 border border-gray-300 rounded-lg"
                 >
-                {props.map((prop, index) => (
+                {props1.map((prop, index) => (
                     <option
                     onClick={() => setPropType(index)}
                     key={prop.objectId}
@@ -337,7 +421,7 @@ function App() {
                 id="specificProp"
                 className="w-full p-2 border border-gray-300 rounded-lg"
                 >
-                {props[propType]?.objects.map((prop) => (
+                {props1[propType]?.objects.map((prop) => (
                     <option key={prop.objectId} value={prop.objectId}>
                     {prop.name}
                     </option>

@@ -89,7 +89,8 @@ Route::put('/changes/{id}', function (Request $request, $id) {
         'description' => 'nullable|string',
         'pelapor' => 'nullable|string|max:255',
         'status' => 'nullable|string|max:255',
-        'object_id' => 'nullable|string|max:255',
+        // allow any type (no string rule)
+        'object_id' => 'nullable',
         'urn' => 'nullable|string|max:255',
         'impact_analysis' => 'nullable|string',
         'mitigation_plan' => 'nullable|string',
@@ -97,6 +98,11 @@ Route::put('/changes/{id}', function (Request $request, $id) {
         'implemented_by' => 'nullable|string|max:255',
         'evaluation_notes' => 'nullable|string',
     ]);
+
+    // Ensure object_id stored as string if present
+    if (array_key_exists('object_id', $validated) && !is_null($validated['object_id'])) {
+        $validated['object_id'] = (string) $validated['object_id'];
+    }
 
     $change->update($validated);
 
@@ -123,9 +129,15 @@ Route::put('/changes/{id}', function (Request $request, $id) {
             'dampak' => 'nullable|string',
             'tindakan_mitigasi' => 'nullable|string',
             'status' => 'nullable|string|in:pending,aktif,selesai',
-            'object_id' => 'nullable|string|max:255',
+            // allow any type for object_id
+            'object_id' => 'nullable',
             'urn' => 'nullable|string|max:255',
         ]);
+
+        if (array_key_exists('object_id', $validated) && !is_null($validated['object_id'])) {
+            $validated['object_id'] = (string) $validated['object_id'];
+        }
+
         $risk->update($validated);
         return redirect()->back()->with('success', 'Risk updated successfully!');
     })->name('risks.update');
@@ -187,7 +199,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'description' => 'nullable|string',
             'pelapor' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:100',
-            'object_id' => 'nullable|integer',
+            // allow any type, will cast below
+            'object_id' => 'nullable',
             'impact_analysis' => 'nullable|string',
             'mitigation_plan' => 'nullable|string',
             'approved_by' => 'nullable|string|max:255',
@@ -195,14 +208,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'evaluation_notes' => 'nullable|string',
         ]);
 
-        $validated['urn'] = $urn;
+    // Force object_id to string
+    if (array_key_exists('object_id', $validated) && !is_null($validated['object_id'])) {
+        $validated['object_id'] = (string) $validated['object_id'];
+    }
+    $validated['status'] = 'pending';
+    $validated['urn'] = $urn;
 
-        $change = \App\Models\Change::create($validated);
+    $change = \App\Models\Change::create($validated);
 
-        return redirect()
-            ->route('changes.show', $change->id)
-            ->with('success', 'Change created successfully!');
-    })->name('changes.store');
+    return redirect()
+        ->route('changes.show', $change->id)
+        ->with('success', 'Change created successfully!');
+})->name('changes.store');
 
 
     // ModelUpload CRUD Routes
@@ -210,6 +228,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $uploads = ModelUpload::latest()->get();
         return Inertia::render('bimView', ['uploads' => $uploads]);
     })->name('models.index');
+     // ModelUpload CRUD Routes
 
     Route::get('/models/{id}', function ($id) {
         $model = ModelUpload::findOrFail($id);
@@ -224,6 +243,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->route('models.show', $model->id)
             ->with('success', 'Model stored successfully!');
     })->name('models.store');
+    Route::post('/models/copy', function (Request $request) {
+       
+        $prevModel = ModelUpload::where('urn', $request->previous_urn)->first();
+        $model = ModelUpload::create([
+            'urn' => $request->$prevModel->urn,
+            'filename' => $request->filename,
+            'iteration'=> $prevModel ? $prevModel->iteration + 1 : 1,
+            'current_urn'=> $request->current_urn,
+        ]);
+        return redirect()->route('models.show', $model->id)
+            ->with('success', 'Model stored successfully!');
+    })->name('models.copy');
 
     Route::put('/models/{id}', function (Request $request, $id) {
         $model = ModelUpload::findOrFail($id);
@@ -296,14 +327,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'dampak' => 'nullable|string',
             'tindakan_mitigasi' => 'nullable|string',
             'status' => 'nullable|string|max:100',
-            'object_id' => 'nullable|string|max:255',
+            // allow any type for object_id in creation
+            'object_id' => 'nullable',
         ]);
-        $validated['status'] = 'pending';
-        $validated['urn'] = $urn;
-        $risk = Risk::create($validated);
-        return redirect()->route('risks.show', $risk->id)
-            ->with('success', 'Risk created successfully!');
-    })->name('risks.store');
+
+    // cast object_id if provided
+    if (array_key_exists('object_id', $validated) && !is_null($validated['object_id'])) {
+        $validated['object_id'] = (string) $validated['object_id'];
+    }
+
+    $validated['status'] = 'pending';
+    $validated['urn'] = $urn;
+    $risk = Risk::create($validated);
+    return redirect()->route('risks.show', $risk->id)
+        ->with('success', 'Risk created successfully!');
+})->name('risks.store');
 
     // Other Views
     Route::get('/bim-view/{urn}', function ($urn) {
@@ -315,7 +353,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     Route::get('bimUpload', function () {
-        return Inertia::render('bimUpload');
+        $uploads = ModelUpload::all();
+        return Inertia::render('bimUpload', ["uploads"=>$uploads]);
     })->name('bimUpload');
 });
 
