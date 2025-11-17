@@ -94,6 +94,11 @@ export default function Dashboard() {
                         6
                     </div>
                     <p className='font-bold mr-[20px]'>Evaluasi </p> lakukan evaluasi terhadap hasil implementasi untuk memastikan efektivitas perubahan dan kesesuaian dengan tujuan awal
+                    {user.role== 'admin' && (
+                        <Link href='/admin/changes'>
+                            <button className='bg-white px-2 py-1 rounded-[2px] text-black hover:bg-slate-400 mx-xl ms-2'> Click here </button>
+                        </Link>
+                    )}
                 </div>
 
                     </div>

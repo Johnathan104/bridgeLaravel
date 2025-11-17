@@ -349,7 +349,7 @@ function App() {
     <div className="flex justify-center items-center p-4">
        
         <div className="w-full max-w-4xl border border-gray-400 rounded-lg p-6 shadow">
-        <h1 className="text-2xl font-bold mb-4">Upload RVT and Get URN</h1>
+        {/* <h1 className="text-2xl font-bold mb-4">Upload RVT and Get URN</h1>
          <p>select type of upload (new/ copy)</p>
         <select 
         name="uploading_type" 
@@ -359,7 +359,7 @@ function App() {
         className="w-full p-4 border-gray-300 rounded-sm mb-4 border">
           <option  value="new">New Upload</option>
           <option value="copy">Copy Existing Model</option>
-        </select>
+        </select> */}
         {uploadType === 'copy' && (
           <select 
           name="previsousURN" 
