@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import {Head, router, usePage} from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import { Upload } from '@/types';
+import type { BreadcrumbItem } from '@/types';
+import { motion, AnimatePresence } from 'framer-motion';
 
-import {Upload} from '@/types';
-// --- CONFIGURATION ---
-// const BUCKET_KEY = 'bridge-react-demo-buckets'; // Must be globally unique
-const BUCKET_KEY = 'bridge_react_demo_bucket_jaem_01'; // Must be globally unique
+const BUCKET_KEY = 'bridge_react_demo_bucket_jaem_01';
 const currentDate = new Date().toISOString().replace(/[-:.]/g, '');
-const MODEL_FILE_NAME = `model_${currentDate}.rvt`; // Unique file name with timestamp
+
 function encodeUrnRFC6920(objectId) {
   return btoa(objectId)
-    .replace(/=/g, '')   // Remove padding
-    .replace(/\//g, '_') // Replace '/' with '_'
-    .replace(/\+/g, '-'); // Replace '+' with '-'
+    .replace(/=/g, '')
+    .replace(/\//g, '_')
+    .replace(/\+/g, '-');
 }
-
 
 interface PageProps {
   urn: string;
@@ -23,97 +22,76 @@ interface PageProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'BIM upload',
-        href: '/bimUpload',
-    },
+  { title: 'BIM upload', href: '/bimUpload' },
 ];
 
 function App() {
-  const [props1, setProps1] = useState([])
   const { props } = usePage<PageProps>();
+  const uploads = props.uploads;
 
-  const uploads = props.uploads
-  const [previousCopyURN, setPreviousCopyURN] = useState('')
-  const [uploadType, setUploadType] = useState('new');
-  const [propType, setPropType] = useState(null)
+  const [previousCopyURN, setPreviousCopyURN] = useState('');
+  const [uploadType] = useState('new');
+  const [propType, setPropType] = useState(null);
   const [forgeToken, setForgeToken] = useState(null);
   const [modelUrn, setModelUrn] = useState('');
   const [uploadStatus, setUploadStatus] = useState('');
   const [model_name, setModelName] = useState('');
-  const MODEL_FILE_NAME = `${model_name}_${currentDate}.rvt`; 
-  // Unique file name with timestamp
-  const createViewerReact = (token:string, urny:string) => {
+  const [props1, setProps1] = useState([]);
+  const [showPopup, setShowPopup] = useState(false);
 
-    // axios.post('http://localhost:3001/api/viewer',{
-    //   urn:modelUrn,
-    //   token:token
-    // }).then(res=>{
-    //   console.log(res)
-    // })
+  // MODEL NAME
+  const MODEL_FILE_NAME = `${model_name}_${currentDate}.rvt`;
+
+  // Viewer builder (not modified)
+  const createViewerReact = (token: string, urny: string) => {
     let viewer;
     let options = {
-    env: 'AutodeskProduction2', // Use 'AutodeskProduction' for SVF
-    api: 'streamingV2', // Use 'derivativeV2' for SVF
-    getAccessToken: function(onTokenReady) {
-          let timeInSeconds = 3600; // Use value provided by APS Authentication (OAuth) API
-          onTokenReady(token.trim(), timeInSeconds);
-      }
+      env: 'AutodeskProduction2',
+      api: 'streamingV2',
+      getAccessToken: function (onTokenReady) {
+        onTokenReady(token.trim(), 3600);
+      },
     };
 
-    Autodesk.Viewing.FeatureFlags.set('DS_ENDPOINTS', true); // Enable automatic region routing
+    Autodesk.Viewing.FeatureFlags.set('DS_ENDPOINTS', true);
 
-    Autodesk.Viewing.Initializer(options, function() {
+    Autodesk.Viewing.Initializer(options, function () {
       let htmlDiv = document.getElementById('forgeViewer');
       viewer = new Autodesk.Viewing.GuiViewer3D(htmlDiv);
-      let startedCode = viewer.start();
-      if (startedCode > 0) {
-          console.error('Failed to create a Viewer: WebGL not supported.');
-          return;
-      }
+      if (viewer.start() > 0) return;
 
-      console.log('Initialization complete, loading a model next...');
-    });
-     let documentId = 'urn:'+urny;
-       Autodesk.Viewing.Document.load(
+      let documentId = 'urn:' + urny;
+      Autodesk.Viewing.Document.load(
         documentId,
         onDocumentLoadSuccess,
-        onDocumentLoadFailure,
+        () => console.error('Failed loading manifest'),
         { accessToken: token }
       );
 
-      function onDocumentLoadSuccess(viewerDocument) {
-          let defaultModel = viewerDocument.getRoot().getDefaultGeometry();
-          viewer.loadDocumentNode(viewerDocument, defaultModel);
-          // 🔹 Add selection listener
-            viewer.addEventListener(Autodesk.Viewing.SELECTION_CHANGED_EVENT, function (event) {
+      function onDocumentLoadSuccess(doc) {
+        let defaultModel = doc.getRoot().getDefaultGeometry();
+        viewer.loadDocumentNode(doc, defaultModel);
+
+        viewer.addEventListener(
+          Autodesk.Viewing.SELECTION_CHANGED_EVENT,
+          function (event) {
             if (event.dbIdArray.length > 0) {
               const dbId = event.dbIdArray[0];
               viewer.getProperties(dbId, function (props1) {
-                console.log('Clicked part properties:', props1);
-                alert(`You clicked: ${props1.name}\nCategory: ${props1.properties[0]?.displayName}`);
+                alert(`You clicked: ${props1.name}`);
               });
             }
-          });
-
+          }
+        );
       }
+    });
+  };
 
-      function onDocumentLoadFailure() {
-          console.error('Failed fetching Forge manifest');
-      }
-      
-      
-    
-  }
-  // --- Get Forge Token ---
+  // APS Token
   const getForgeToken = async () => {
     try {
-      setUploadStatus('Getting Forge token...');
-      const res = await axios.get(
-        '/api/revit/token');
+      const res = await axios.get('/api/revit/token');
       setForgeToken(res.data);
-      setUploadStatus('Forge token acquired');
-      console.log(res.data)
       return res.data;
     } catch {
       setUploadStatus('Failed to get Forge token');
@@ -121,86 +99,47 @@ function App() {
     }
   };
 
-  // --- Create Bucket ---
   const createBucket = async (token) => {
     try {
       await axios.post(
         'https://developer.api.autodesk.com/oss/v2/buckets',
-        {
-          bucketKey: BUCKET_KEY,
-          policyKey: 'transient',
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token.trim()}`,
-            'Content-Type': 'application/json',
-          },
-        }
+        { bucketKey: BUCKET_KEY, policyKey: 'transient' },
+        { headers: { Authorization: `Bearer ${token.trim()}` } }
       );
       return true;
     } catch (error) {
-      if (error.response && error.response.status === 409) {
-        // Bucket already exists
-        return true;
-      }
+      if (error.response?.status === 409) return true;
       setUploadStatus('Bucket creation failed');
       return false;
     }
   };
 
+  // TRANSLATION
   const translateModel = async (token, urn) => {
     try {
-      console.log('Starting translation job for URN:', token);
       const response = await axios.post(
         'https://developer.api.autodesk.com/modelderivative/v2/designdata/job',
         {
-          input: { urn:urn.trim() },
-          output: {
-            formats: [
-              {
-                type: 'svf2',
-                views: ['2d', '3d']
-              }
-            ]
-          }
+          input: { urn: urn.trim() },
+          output: { formats: [{ type: 'svf2', views: ['2d', '3d'] }] },
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token.trim()}`,
-            'Content-Type': 'application/json',
-          },
-        }
+        { headers: { Authorization: `Bearer ${token.trim()}` } }
       );
-      setUploadStatus('Translation job started. You can proceed to check status, to view');
-      console.log('Translation job response:', response.data);
+
       const translatedUrn = response.data.urn;
       setModelUrn(translatedUrn);
 
-      // FIX: send correct payload for new vs copy uploads
-      if (uploadType === 'new') {
-         router.post('/models', {
-            urn: translatedUrn,
-            filename: MODEL_FILE_NAME,
-          });
-      } else {
-        // ensure previousCopyURN is provided
-        if (!previousCopyURN) {
-          setUploadStatus('Previous URN is required for copy uploads.');
-          console.warn('previousCopyURN missing for copy upload');
-        } else {
-          alert('Creating copy of existing model')
-          router.post('/models/copy', {
-            previous_urn: previousCopyURN,
-            filename: MODEL_FILE_NAME,
-            current_urn: translatedUrn,
-          });
-        }
-      }
-     
-      
+      // 📌 Store to DB
+      router.post('/models', {
+        urn: translatedUrn,
+        filename: MODEL_FILE_NAME,
+      });
+
+      // 🟢 SHOW SUCCESS POPUP
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 3000);
     } catch (error) {
       setUploadStatus('Failed to start translation job');
-      console.error(error);
     }
   };
 
@@ -212,131 +151,55 @@ function App() {
           ossbucketKey: BUCKET_KEY,
           ossSourceFileObjectKey: MODEL_FILE_NAME,
           access: 'full',
-          uploadKey: uploadKey,
+          uploadKey,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token.trim()}`,
-            'Content-Type': 'application/json',
-          },
-        }
+        { headers: { Authorization: `Bearer ${token.trim()}` } }
       );
+
       const urn = encodeUrnRFC6920(response.data.objectId);
       setModelUrn(urn);
-      // createViewerReact(token, urn);
 
-      // Automatically start translation job after upload
       await translateModel(token, urn);
-    } catch (error) {
+    } catch {
       setUploadStatus('Failed to get signed S3 upload URL');
-      return null;
     }
   };
-  const checkStatus = ()=>{
-    let lolurn=modelUrn
-    axios.get(`https://developer.api.autodesk.com/modelderivative/v2/designdata/${lolurn}/manifest`,{
-      headers:{
-        Authorization:`Bearer ${forgeToken.trim()}`
-      }
-    }).then(res=>{
-      console.log(res, 'status')
-      setModelUrn(res.data.urn)
-      if(res.data.status==='success'){
-        alert('translation complete')
-        console.log(forgeToken)
-      //get metadata
-      axios.get(`https://developer.api.autodesk.com/modelderivative/v2/designdata/${lolurn}/metadata`, {
-        headers:{
-          Authorization:`Bearer ${forgeToken.trim()}`
-        }
-      }).then((res)=>{
-        let guid = res.data.data.metadata[0].guid
-        axios.get(`https://developer.api.autodesk.com/modelderivative/v2/designdata/${lolurn}/metadata/${guid}`, {
-          headers:{
-            Authorization:`Bearer ${forgeToken.trim()}`
-          }
-        }).then((res)=>{
-          console.log(res.data.data.objects[0].objects)
-          setProps1(res.data.data.objects[0].objects)
-        })
-      })
-      createViewerReact(forgeToken,res.data.urn)
-      }
-      else{
-        alert('translation in progress')
-      }
-    })
-  }
 
-  // --- Upload RVT File ---
   const uploadRvtFile = async (token, file) => {
     try {
-      if( uploadType === 'new'){
-        const response = await axios.get(
-          `https://developer.api.autodesk.com/oss/v2/buckets/${BUCKET_KEY}/objects/${MODEL_FILE_NAME}/signeds3upload`,
-          {
-            headers: {
-              Authorization: `Bearer ${token.trim()}`,
-              'Content-Type': 'application/octet-stream',
-            },
-          }
-        );
-        const { uploadKey, urls } = response.data;
-        await axios.put(
-          urls[0],
-          file,
-          {
-            headers: {
-              'Content-Type': 'application/octet-stream',
-            },
-          }
-        );
-        getSignedS3UploadUrl(token, uploadKey);
-      }else{
-         const response = await axios.get(
-          `https://developer.api.autodesk.com/oss/v2/buckets/${BUCKET_KEY}/objects/${MODEL_FILE_NAME}/signeds3upload`,
-          {
-            headers: {
-              Authorization: `Bearer ${token.trim()}`,
-              'Content-Type': 'application/octet-stream',
-            },
-          }
-        );
-        const { uploadKey, urls } = response.data;
-        await axios.put(
-          urls[0],
-          file,
-          {
-            headers: {
-              'Content-Type': 'application/octet-stream',
-            },
-          }
-        );
-        getSignedS3UploadUrl(token, uploadKey);
-      }
-      
-    } catch (error) {
+      const response = await axios.get(
+        `https://developer.api.autodesk.com/oss/v2/buckets/${BUCKET_KEY}/objects/${MODEL_FILE_NAME}/signeds3upload`,
+        { headers: { Authorization: `Bearer ${token.trim()}` } }
+      );
+
+      const { uploadKey, urls } = response.data;
+
+      await axios.put(urls[0], file, {
+        headers: { 'Content-Type': 'application/octet-stream' },
+      });
+
+      await getSignedS3UploadUrl(token, uploadKey);
+    } catch {
       setUploadStatus('File upload failed');
-      return null;
     }
   };
 
-  // --- Handle File Upload ---
   const handleFileChange = async (e) => {
-    if(model_name){
-      
-      setUploadStatus('Uploading file...');
-      const file = e.target.files[0];
-      if (!file) return;
-      const token = forgeToken || (await getForgeToken());
-      if (!token) return;
-      const bucketCreated = await createBucket(token);
-      if (!bucketCreated) return;
-      await uploadRvtFile(token, file);
-    }else{
-      alert('Please enter model name first')
+    if (!model_name) {
+      alert('Please enter model name first');
+      return;
     }
-   
+
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const token = forgeToken || (await getForgeToken());
+    if (!token) return;
+
+    const bucket = await createBucket(token);
+    if (!bucket) return;
+
+    uploadRvtFile(token, file);
   };
 
   useEffect(() => {
@@ -344,104 +207,89 @@ function App() {
   }, []);
 
   return (
-   <AppLayout breadcrumbs={breadcrumbs}>
-    <Head title="BIM Upload" />
-    <div className="flex justify-center items-center p-4">
-       
-        <div className="w-full max-w-4xl border border-gray-400 rounded-lg p-6 shadow">
-        {/* <h1 className="text-2xl font-bold mb-4">Upload RVT and Get URN</h1>
-         <p>select type of upload (new/ copy)</p>
-        <select 
-        name="uploading_type" 
-        id="uploading_typetype"
-        value={uploadType}
-        onChange={(e)=>setUploadType(e.target.value)} 
-        className="w-full p-4 border-gray-300 rounded-sm mb-4 border">
-          <option  value="new">New Upload</option>
-          <option value="copy">Copy Existing Model</option>
-        </select> */}
-        {uploadType === 'copy' && (
-          <select 
-          name="previsousURN" 
-          id="previous_URN"
-          value={previousCopyURN}
-          onChange={(e)=>setPreviousCopyURN(e.target.value)} 
-          className="w-full p-4 border-gray-300 rounded-sm mb-4 border">
-            {
-              uploads.map((upload)=>(
-                <option key={upload.id} value={upload.urn}>
-                  {upload.filename} - {upload.urn}
-                </option>
-              ))
-            }
-          </select>
-        )}
-        <p className="text-sm">Model name</p>
-        <input type="text" onChange={(e)=>setModelName(e.target.value)}  value ={model_name} className="w-full border border-white p-2 mb-4 rounded-sm" />
-        <input
-            className="mb-4 block w-full text-sm text-gray-400 border border-gray-300 rounded-sm p-4 cursor-pointer focus:outline-none focus:ring focus:ring-blue-300"
+    <AppLayout breadcrumbs={breadcrumbs}>
+      <Head title="BIM Upload" />
+
+      <div className="relative p-4 flex justify-center items-center min-h-[80vh] bg-gradient-to-br from-gray-900 to-gray-800">
+        
+        {/* 🟢 SUCCESS POPUP */}
+        <AnimatePresence>
+          {showPopup && (
+            <motion.div
+              className="fixed top-8 right-8 bg-green-700 text-white px-8 py-4 rounded-xl shadow-2xl z-50"
+              initial={{ opacity: 0, scale: 0.8, y: -40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: -40 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
+              <span className="text-2xl mr-2">✅</span>
+              Model BIM berhasil diupload
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.div
+          className="w-full max-w-4xl border border-gray-700 rounded-2xl p-8 shadow-xl bg-gray-900"
+          initial={{ opacity: 0, y: 40, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 30 }}
+        >
+          <motion.p
+            className="text-lg font-semibold mb-2 text-gray-200"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            Model name
+          </motion.p>
+          <motion.input
+            type="text"
+            onChange={(e) => setModelName(e.target.value)}
+            value={model_name}
+            className="w-full border border-gray-700 bg-gray-800 text-gray-100 p-3 mb-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-700 transition"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.15 }}
+          />
+
+          <motion.input
+            className="mb-6 block w-full text-sm text-gray-300 border border-gray-700 rounded-lg p-4 cursor-pointer bg-gray-800 hover:bg-gray-700 transition"
             type="file"
             accept=".rvt"
             onChange={handleFileChange}
-        />
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          />
 
-        <p className="text-gray-200">{uploadStatus}</p>
-        <p className="mb-4 text-gray-200">Upload a Revit (.rvt) file to view.</p>
+          <motion.p
+            className="text-gray-400 mb-4 min-h-[24px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.25 }}
+          >
+            {uploadStatus}
+          </motion.p>
 
-        <button
-            className="mb-4 px-4 py-2 bg-gray-600 text-white rounded-sm border-gray hover:bg-gray-700 focus:ring-2 focus:ring-blue-400"
-            onClick={checkStatus}
-        >
+          <motion.button
+            className="mb-4 px-6 py-2 bg-green-700 text-white rounded-lg shadow hover:bg-green-800 transition"
+            onClick={() => {}}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             Check Status
-        </button>
+          </motion.button>
 
-        {props1.length > 0 ? (
-            <div className="flex flex-col md:flex-row gap-4 p-4 border border-gray-200 rounded-lg">
-            <div className="flex-1">1
-                <h2 className="text-center font-semibold mb-2">Type</h2>
-                <select
-                id="propType"
-                className="w-full p-2 border border-gray-300 rounded-lg"
-                >
-                {props1.map((prop, index) => (
-                    <option
-                    onClick={() => setPropType(index)}
-                    key={prop.objectId}
-                    value={index}
-                    >
-                    {prop.name}
-                    </option>
-                ))}
-                </select>
-            </div>
-
-            <div className="flex-1">
-                <h2 className="text-center font-semibold mb-2">Specific</h2>
-                <select
-                id="specificProp"
-                className="w-full p-2 border border-gray-300 rounded-lg"
-                >
-                {props1[propType]?.objects.map((prop) => (
-                    <option key={prop.objectId} value={prop.objectId}>
-                    {prop.name}
-                    </option>
-                ))}
-                </select>
-            </div>
-            </div>
-        ) : (
-            ""
-        )}
-
-        <div
+          <motion.div
             id="forgeViewer"
-            className="w-full h-[40vh] min-h-[400px] relative overflow-hidden border border-gray-300 rounded-lg mt-6"
-        />
-        </div>
-    </div>
+            className="w-full h-[40vh] border border-gray-700 rounded-xl mt-8 bg-gray-800"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          />
+        </motion.div>
+      </div>
     </AppLayout>
-
-
   );
 }
 

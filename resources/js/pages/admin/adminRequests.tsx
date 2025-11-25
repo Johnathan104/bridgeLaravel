@@ -38,18 +38,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 function AdminRequests() {
-    const { props } = usePage<PageProps>();
+   const { props } = usePage<PageProps>();
     const { requests: initialRequests, filter } = props;
-    const changes: any[]= props.changes
-    const risks:any[] =props.risks
+    const changes: any[] = props.changes;
+    const risks: any[] = props.risks;
+
     const [requests, setRequests] = useState<Request[]>(initialRequests);
     const [processingId, setProcessingId] = useState<number | null>(null);
 
-    // Modal state for editing change
     const [editChangeModalOpen, setEditChangeModalOpen] = useState(false);
     const [editRiskModalOpen, setEditRiskModalOpen] = useState(false);
     const [changeForm, setChangeForm] = useState<any>({});
-     const [riskForm, setRiskForm] = useState<any>({});
+    const [riskForm, setRiskForm] = useState<any>({});
     const [changeFormErrors, setChangeFormErrors] = useState<string | null>(null);
     const [changeProcessing, setChangeProcessing] = useState(false);
 
@@ -61,49 +61,44 @@ function AdminRequests() {
     };
 
     const handleEditChange = (request: Request) => {
-        console.log(request)
-        console.log(changes)
-        changes.forEach(change=>{
-            if(change.id === request.change_id){
+        changes.forEach(change => {
+            if (change.id === request.change_id) {
                 setChangeForm(change);
                 setEditChangeModalOpen(true);
                 setChangeFormErrors(null);
             }
-        })
+        });
     };
-    const handleDelete = (request:Request)=>{
-        router.delete('/requests/'+request.id, {
-            preserveScroll:true,
-            onSuccess:()=>{
-                alert('delete success')
-                window.location.href = '/requests/processed' 
+
+    const handleDelete = (request: Request) => {
+        router.delete('/requests/' + request.id, {
+            preserveScroll: true,
+            onSuccess: () => {
+                alert('delete success');
+                window.location.href = '/requests/processed';
             },
-            onError:(error)=>{
-                console.error(error)
+            onError: (error) => {
+                console.error(error);
             }
-        })
-    }
+        });
+    };
+
     const handleEditRisk = (request: Request) => {
-        console.log(request)
-        console.log(risks)
-        risks.forEach(risk=>{
-            console.log('risk id', risk.id)
-            console.log('request risk id', request.risk_id)
-            if(risk.id === request.risk_id){
-                console.log(risk)
+        risks.forEach(risk => {
+            if (risk.id === request.risk_id) {
                 setRiskForm(risk);
-                console.log(riskForm)
                 setEditRiskModalOpen(true);
                 setChangeFormErrors(null);
             }
-        })
+        });
     };
-const handleRiskEditSubmit = (e: React.FormEvent) => {
+
+    const handleRiskEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setChangeProcessing(true);
         setChangeFormErrors(null);
-        riskForm.object_id =   riskForm.object_id.toString()
-        
+        riskForm.object_id = riskForm.object_id.toString();
+
         router.put(`/risks/${riskForm.id}`, riskForm, {
             preserveScroll: true,
             onSuccess: () => {
@@ -116,49 +111,51 @@ const handleRiskEditSubmit = (e: React.FormEvent) => {
                 );
             },
             onError: (error) => {
-                console.error(error)
+                console.error(error);
                 setChangeFormErrors('Gagal mengupdate perubahan.');
                 setChangeProcessing(false);
             },
             onFinish: () => setChangeProcessing(false),
         });
     };
-    const handleAction = (request:Request, action:string)=>{
-        if(action==='accept'){
-            request.status='approved'
-            router.put('/requests/'+request.id,{
-                status:'approved'
-            },{
-                preserveScroll:true,
-                onSuccess:()=>{
-                    alert('successfully accepted')
-                    window.location.href = '/requests/pending'
+
+    const handleAction = (request: Request, action: string) => {
+        if (action === 'accept') {
+            request.status = 'approved';
+            router.put('/requests/' + request.id, {
+                status: 'approved'
+            }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    alert('successfully accepted');
+                    window.location.href = '/requests/pending';
                 },
-                onError:(Error)=>{
-                    console.log(Error)
+                onError: (Error) => {
+                    console.log(Error);
                 }
-            })
-        }else if(action==='reject'){
-            console.log('rejected!!')
-            router.put('/requests/'+request.id,{
-                status:'rejected'
-            },{
-                preserveScroll:true,
-                onSuccess:()=>{
-                    alert('successfully rejected')
-                    window.location.href = '/requests/pending'
+            });
+        } else if (action === 'reject') {
+            router.put('/requests/' + request.id, {
+                status: 'rejected'
+            }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    alert('successfully rejected');
+                    window.location.href = '/requests/pending';
                 },
-                onError:(Error)=>{
-                    console.log(Error)
+                onError: (Error) => {
+                    console.log(Error);
                 }
-            })
+            });
         }
-    }
+    };
+
     const handleEditChangeSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setChangeProcessing(true);
         setChangeFormErrors(null);
-        changeForm.object_id = changeForm.object_id.toString
+        changeForm.object_id = changeForm.object_id.toString;
+
         router.put(`/changes/${changeForm.id}`, changeForm, {
             preserveScroll: true,
             onSuccess: () => {
@@ -171,16 +168,13 @@ const handleRiskEditSubmit = (e: React.FormEvent) => {
                 );
             },
             onError: (error) => {
-                console.error(error)
+                console.error(error);
                 setChangeFormErrors('Gagal mengupdate perubahan.');
                 setChangeProcessing(false);
             },
             onFinish: () => setChangeProcessing(false),
         });
     };
-
-    // ...existing handleAction and handleDelete...
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={filter === 'pending' ? "Permintaan Tertunda" : "Riwayat Permintaan"} />

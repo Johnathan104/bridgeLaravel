@@ -13,6 +13,7 @@ import { type BreadcrumbItem } from '@/types';
 import XlsUploadButton from '@/components/xlsUploadButton'
 import ExcelPreview from '@/components/excelPreview';
 import Modal from '@/components/modal'
+import { motion, AnimatePresence } from 'framer-motion';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -611,11 +612,21 @@ const handleRequestChangeSubmit = (e: React.FormEvent) => {
 
         
         <p className="mb-4">{uploadStatus}</p>
-        <div
+         {/* Forge Viewer container */}
+        <motion.div
+          variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
           id="forgeViewer"
           className="w-full h-[70vh] min-h-[400px] relative overflow-hidden border border-gray-300 rounded-lg"
         />
-        <button onClick={resetView} className="bg-stone-800 mt-4 hover:bg-stone-700 px-4 py-2">Reset view</button>
+
+        {/* Reset button */}
+        <motion.button
+          variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+          onClick={resetView}
+          className="bg-stone-800 mt-4 hover:bg-stone-700 px-4 py-2"
+        >
+          Reset view
+        </motion.button>
         <h1>select schedule</h1>
         <select name="scheduleSelect" onChange={(e)=>handleScheduleSelect(e)}id="sch-slct">
           {
@@ -724,140 +735,208 @@ const handleRequestChangeSubmit = (e: React.FormEvent) => {
       </div>
 
     {/* --- Edit Modal --- */}
-      <Modal  open={editModalOpen} onClose={() => setEditModalOpen(false)}>
-        <h1 className="text-2xl font-bold text-black mb-4">Edit Risiko</h1>
-        {formErrors && (
-          <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{formErrors}</div>
-        )}
-        <form className="flex flex-col w-[80vh] p-5 h-[80vh] overflow-y-scroll" onSubmit={handleEditSubmit}>
-          <label htmlFor="risk_code" className="font-semibold mb-1 text-black">Kode Risiko</label>
-          <input
-            id="risk_code"
-            className="w-full text-black p-2 my-2 border border-gray-300 rounded"
-            type="text"
-            name="risk_code"
-            placeholder="ID/Kode Risiko"
-            value={form.risk_code || ''}
-            onChange={handleFormChange}
-          />
-
-          <label htmlFor="project_name" className="font-semibold mb-1 text-black">Nama Proyek</label>
-          <input
-            id="project_name"
-            className="w-full text-black p-2 my-2 border border-gray-300 rounded"
-            type="text"
-            name="project_name"
-            placeholder="Nama Proyek"
-            value={form.project_name || ''}
-            onChange={handleFormChange}
-          />
-
-          <label htmlFor="deskripsi_risiko" className="font-semibold mb-1 text-black">Deskripsi Risiko</label>
-          <textarea
-            id="deskripsi_risiko"
-            className="w-full p-2 my-2 text-black border border-gray-300 rounded"
-            name="deskripsi_risiko"
-            placeholder="Deskripsi Risiko"
-            value={form.deskripsi_risiko || ''}
-            onChange={handleFormChange}
-          />
-
-          <label htmlFor="penyebab" className="font-semibold mb-1 text-black">Penyebab Risiko</label>
-          <textarea
-            id="penyebab"
-            className="w-full p-2 my-2 text-black border border-gray-300 rounded"
-            name="penyebab"
-            placeholder="Penyebab Risiko"
-            value={form.penyebab || ''}
-            onChange={handleFormChange}
-          />
-
-          <label htmlFor="dampak" className="font-semibold mb-1 text-black">Dampak Risiko</label>
-          <textarea
-            id="dampak"
-            className="w-full p-2 my-2 text-black border border-gray-300 rounded"
-            name="dampak"
-            placeholder="Dampak Risiko"
-            value={form.dampak || ''}
-            onChange={handleFormChange}
-          />
-
-          <label htmlFor="tindakan_mitigasi" className="font-semibold mb-1 text-black">Tindakan Mitigasi</label>
-          <textarea
-            id="tindakan_mitigasi"
-            className="w-full p-2 my-2 text-black border border-gray-300 rounded"
-            name="tindakan_mitigasi"
-            placeholder="Tindakan Mitigasi"
-            value={form.tindakan_mitigasi || ''}
-            onChange={handleFormChange}
-          />
-
-          <label htmlFor="tanggal_kejadian" className="font-semibold mb-1 text-black">Tanggal Kejadian</label>
-          <input
-            id="tanggal_kejadian"
-            className="w-full text-black p-2 my-2 border border-gray-300 rounded"
-            type="date"
-            name="tanggal_kejadian"
-            placeholder="Tanggal Kejadian"
-            value={form.tanggal_kejadian || ''}
-            onChange={handleFormChange}
-          />
-
-          <label htmlFor="status" className="font-semibold mb-1 text-black">Status</label>
-          <select
-            id="status"
-            className="w-full text-black p-2 my-2 border border-gray-300 rounded"
-            name="status"
-            value={form.status || ''}
-            onChange={handleFormChange}
+      <AnimatePresence>
+      {editModalOpen && (
+        <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
           >
-            <option value="">Pilih Status</option>
-            <option value="pending">Pending</option>
-            <option value="aktif">Aktif</option>
-            <option value="selesai">Selesai</option>
-          </select>
+            <h1 className="text-2xl font-bold text-black mb-4">Edit Risiko</h1>
 
-          <input
-            className="w-full p-2 border border-gray-300 rounded bg-stone-800 text-white hover:bg-stone-700 cursor-pointer"
-            type="submit"
-            value={processing ? 'Submitting...' : 'Submit'}
-            disabled={processing}
-          />
-        </form>
-      </Modal>
+            {formErrors && (
+              <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">
+                {formErrors}
+              </div>
+            )}
+
+            <form
+              className="flex flex-col w-[80vh] p-5 h-[80vh] overflow-y-scroll gap-2"
+              onSubmit={handleEditSubmit}
+            >
+              <label htmlFor="risk_code" className="font-semibold mb-1 text-black">
+                Kode Risiko
+              </label>
+              <input
+                id="risk_code"
+                className="w-full text-black p-2 my-2 border border-gray-300 rounded"
+                type="text"
+                name="risk_code"
+                placeholder="ID/Kode Risiko"
+                value={form.risk_code || ""}
+                onChange={handleFormChange}
+              />
+
+              <label htmlFor="project_name" className="font-semibold mb-1 text-black">
+                Nama Proyek
+              </label>
+              <input
+                id="project_name"
+                className="w-full text-black p-2 my-2 border border-gray-300 rounded"
+                type="text"
+                name="project_name"
+                placeholder="Nama Proyek"
+                value={form.project_name || ""}
+                onChange={handleFormChange}
+              />
+
+              <label htmlFor="deskripsi_risiko" className="font-semibold mb-1 text-black">
+                Deskripsi Risiko
+              </label>
+              <textarea
+                id="deskripsi_risiko"
+                className="w-full p-2 my-2 text-black border border-gray-300 rounded"
+                name="deskripsi_risiko"
+                placeholder="Deskripsi Risiko"
+                value={form.deskripsi_risiko || ""}
+                onChange={handleFormChange}
+              />
+
+              <label htmlFor="penyebab" className="font-semibold mb-1 text-black">
+                Penyebab Risiko
+              </label>
+              <textarea
+                id="penyebab"
+                className="w-full p-2 my-2 text-black border border-gray-300 rounded"
+                name="penyebab"
+                placeholder="Penyebab Risiko"
+                value={form.penyebab || ""}
+                onChange={handleFormChange}
+              />
+
+              <label htmlFor="dampak" className="font-semibold mb-1 text-black">
+                Dampak Risiko
+              </label>
+              <textarea
+                id="dampak"
+                className="w-full p-2 my-2 text-black border border-gray-300 rounded"
+                name="dampak"
+                placeholder="Dampak Risiko"
+                value={form.dampak || ""}
+                onChange={handleFormChange}
+              />
+
+              <label htmlFor="tindakan_mitigasi" className="font-semibold mb-1 text-black">
+                Tindakan Mitigasi
+              </label>
+              <textarea
+                id="tindakan_mitigasi"
+                className="w-full p-2 my-2 text-black border border-gray-300 rounded"
+                name="tindakan_mitigasi"
+                placeholder="Tindakan Mitigasi"
+                value={form.tindakan_mitigasi || ""}
+                onChange={handleFormChange}
+              />
+
+              <label htmlFor="tanggal_kejadian" className="font-semibold mb-1 text-black">
+                Tanggal Kejadian
+              </label>
+              <input
+                id="tanggal_kejadian"
+                className="w-full text-black p-2 my-2 border border-gray-300 rounded"
+                type="date"
+                name="tanggal_kejadian"
+                placeholder="Tanggal Kejadian"
+                value={form.tanggal_kejadian || ""}
+                onChange={handleFormChange}
+              />
+
+              <label htmlFor="status" className="font-semibold mb-1 text-black">
+                Status
+              </label>
+              <select
+                id="status"
+                className="w-full text-black p-2 my-2 border border-gray-300 rounded"
+                name="status"
+                value={form.status || ""}
+                onChange={handleFormChange}
+              >
+                <option value="">Pilih Status</option>
+                <option value="pending">Pending</option>
+                <option value="aktif">Aktif</option>
+                <option value="selesai">Selesai</option>
+              </select>
+
+              <input
+                className="w-full p-2 border border-gray-300 rounded bg-gradient-to-r from-stone-800 to-stone-700 text-white font-semibold hover:from-stone-700 hover:to-stone-800 cursor-pointer transition"
+                type="submit"
+                value={processing ? "Submitting..." : "Submit"}
+                disabled={processing}
+              />
+            </form>
+          </motion.div>
+        </Modal>
+      )}
+    </AnimatePresence>
+
       {/* --- reqeust modal ---*/}
-      <Modal open={reqeustModalOpen} onClose ={()=>setRequestModalOpen(false)}>
-        <h1 className="text-2xl font-bold text-black mb-4">Request Perubahan</h1>
-        {requestChangeError && (
-          <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{requestChangeError}</div>
-        )}
-        <form onSubmit={handleRequestChangeSubmit}>
-          <label htmlFor="request_description" className="font-semibold mb-1 text-black">Deskripsi Perubahan</label>
-          <textarea
-            id="request_description"
-            className="w-full p-2 my-2 text-black border border-gray-300 rounded"
-            name="description"
-            placeholder="Deskripsi perubahan"
-            value={requestChangeForm.description}
-            onChange={handleRequestChangeInput}
-            required
-          />
-          <input
-            className="w-full p-2 border border-gray-300 rounded bg-stone-800 text-white hover:bg-stone-700 cursor-pointer"
-            type="submit"
-            value={requestChangeProcessing ? 'Mengirim...' : 'Kirim Request'}
-            disabled={requestChangeProcessing}
-          />
-        </form>
-      </Modal>
+     <AnimatePresence>
+      {reqeustModalOpen && (
+        <Modal open={reqeustModalOpen} onClose={() => setRequestModalOpen(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            <h1 className="text-2xl font-bold text-black mb-4">Request Perubahan</h1>
+
+            {requestChangeError && (
+              <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">
+                {requestChangeError}
+              </div>
+            )}
+
+            <form onSubmit={handleRequestChangeSubmit}>
+              <label htmlFor="request_description" className="font-semibold mb-1 text-black">
+                Deskripsi Perubahan
+              </label>
+
+              <textarea
+                id="request_description"
+                className="w-full p-2 my-2 text-black border border-gray-300 rounded"
+                name="description"
+                placeholder="Deskripsi perubahan"
+                value={requestChangeForm.description}
+                onChange={handleRequestChangeInput}
+                required
+              />
+
+              <input
+                className="w-full p-2 border border-gray-300 rounded bg-stone-800 text-white hover:bg-stone-700 cursor-pointer"
+                type="submit"
+                value={requestChangeProcessing ? "Mengirim..." : "Kirim Request"}
+                disabled={requestChangeProcessing}
+              />
+            </form>
+          </motion.div>
+        </Modal>
+      )}
+    </AnimatePresence>
+
 
       {/* --- Create Change Modal --- */}
       <Modal open={changeModalOpen} onClose={() => setChangeModalOpen(false)}>
-        <h1 className="text-2xl font-bold text-black mb-4">Catat Perubahan Baru</h1>
-        {changeFormErrors && (
-          <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{changeFormErrors}</div>
-        )}
-        <form className="flex flex-col w-[80vh] h-[70vh] overflow-y-scroll" onSubmit={handleCreateChangeSubmit}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
+          <h1 className="text-2xl font-bold text-black mb-4">Catat Perubahan Baru</h1>
+
+          {changeFormErrors && (
+            <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">
+              {changeFormErrors}
+            </div>
+          )}
+
+          <form
+            className="flex flex-col w-[80vh] h-[70vh] overflow-y-scroll"
+            onSubmit={handleCreateChangeSubmit}
+          >
           <label htmlFor="change_date" className="font-semibold mb-1 text-black">Tanggal</label>
           <input
             id="change_date"
@@ -968,22 +1047,36 @@ const handleRequestChangeSubmit = (e: React.FormEvent) => {
           <div className="text-xs text-gray-500 mb-2">
             Object ID diambil dari seleksi di Forge Viewer.
           </div>
-          <input
-            className="w-full p-2 border border-gray-300 rounded bg-stone-800 text-white hover:bg-stone-700 cursor-pointer"
-            type="submit"
-            value={changeProcessing ? 'Submitting...' : 'Submit'}
-            disabled={changeProcessing}
-          />
-        </form>
-      </Modal>
+             <input
+        className="w-full p-2 border border-gray-300 rounded bg-stone-800 text-white hover:bg-stone-700 cursor-pointer"
+        type="submit"
+        value={changeProcessing ? "Submitting..." : "Submit"}
+        disabled={changeProcessing}
+      />
+    </form>
+  </motion.div>
+</Modal>
 
       {/* --- Edit Change Modal --- */}
       <Modal open={editChangeModalOpen} onClose={() => setEditChangeModalOpen(false)}>
-        <h1 className="text-2xl font-bold text-black mb-4">Edit Perubahan</h1>
-        {changeFormErrors && (
-          <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{changeFormErrors}</div>
-        )}
-        <form className="flex flex-col w-[80vh] h-[80vh] overflow-y-scroll" onSubmit={handleEditChangeSubmit}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
+          <h1 className="text-2xl font-bold text-black mb-4">Edit Perubahan</h1>
+
+          {changeFormErrors && (
+            <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">
+              {changeFormErrors}
+            </div>
+          )}
+
+          <form
+            className="flex flex-col w-[80vh] h-[80vh] overflow-y-scroll"
+            onSubmit={handleEditChangeSubmit}
+          >
           <label htmlFor="edit_change_date" className="font-semibold mb-1 text-black">Tanggal</label>
           <input
             id="edit_change_date"
@@ -1108,13 +1201,14 @@ const handleRequestChangeSubmit = (e: React.FormEvent) => {
             Object ID diambil dari seleksi di Forge Viewer.
           </div>
           <input
-            className="w-full p-2 border border-gray-300 rounded bg-stone-800 text-white hover:bg-stone-700 cursor-pointer"
-            type="submit"
-            value={changeProcessing ? 'Submitting...' : 'Submit'}
-            disabled={changeProcessing}
-          />
-        </form>
-      </Modal>
+        className="w-full p-2 border border-gray-300 rounded bg-stone-800 text-white hover:bg-stone-700 cursor-pointer"
+        type="submit"
+        value={changeProcessing ? "Submitting..." : "Submit"}
+        disabled={changeProcessing}
+      />
+    </form>
+  </motion.div>
+</Modal>
     </AppLayout>
   );
 }
